@@ -1,14 +1,15 @@
 import csv
 import logging
+import os
 from pathlib import Path
 
 import yaml
 from pydantic import ValidationError
 
-from error_handlers import ErrorStrategy
-from factory import build_error_handler, build_writer
-from models import Transaction
-from writers import WriterStrategy
+from ingest.strategies.error_handlers import ErrorStrategy
+from ingest.strategies.writers import WriterStrategy
+from ingest.factory import build_error_handler, build_writer
+from ingest.models import Transaction
 
 logging.basicConfig(level=logging.INFO, format="%(levelname)s %(message)s")
 log = logging.getLogger(__name__)
@@ -38,15 +39,17 @@ def ingest(csv_path: str, writer: WriterStrategy, on_error: ErrorStrategy) -> No
 
 
 def main() -> None:
-    config_path = Path(__file__).parent / "config.yaml"
+    config_path = Path(__file__).parent.parent / "config.yaml"
     with open(config_path) as f:
         config = yaml.safe_load(f)
 
     writer = build_writer(config["writer"])
     on_error = build_error_handler(config["error_handler"])
 
+    csv_path = os.getenv("CSV_PATH") or config["csv_path"]
+
     with writer, on_error:
-        ingest(config["csv_path"], writer, on_error)
+        ingest(csv_path, writer, on_error)
 
 
 if __name__ == "__main__":

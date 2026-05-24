@@ -1,11 +1,14 @@
-from error_handlers import CsvErrorStrategy, ErrorStrategy, LogErrorStrategy
-from writers import PostgresWriter, WriterStrategy
+import os
+
+from ingest.strategies.error_handlers import CsvErrorStrategy, ErrorStrategy, LogErrorStrategy
+from ingest.strategies.writers import PostgresWriter, WriterStrategy
 
 
 def build_writer(config: dict) -> WriterStrategy:
     writer_type = config["type"]
     if writer_type == "postgres":
-        return PostgresWriter(config["dsn"])
+        dsn = os.getenv("DATABASE_URL") or config["dsn"]
+        return PostgresWriter(dsn)
     raise ValueError(f"Unknown writer type: '{writer_type}'")
 
 

@@ -5,7 +5,7 @@ WORKDIR /app
 COPY pyproject.toml .
 RUN uv sync --no-dev --no-install-project
 
-COPY *.py .
+COPY ingest/ ./ingest/
 COPY config.yaml .
 
-CMD ["uv", "run", "python", "main.py"]
+CMD ["uv", "run", "python", "-m", "ingest.main"]

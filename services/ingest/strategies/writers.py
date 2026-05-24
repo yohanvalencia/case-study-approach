@@ -2,7 +2,7 @@ from abc import ABC, abstractmethod
 
 import psycopg2
 
-from models import Transaction
+from ingest.models import Transaction
 
 _INSERT_SQL = """
     INSERT INTO public.customer_transactions
