@@ -5,8 +5,8 @@ CREATE DATABASE pipeline;
 CREATE SCHEMA IF NOT EXISTS bronze;
 CREATE SCHEMA IF NOT EXISTS silver;
 
-CREATE TABLE bronze.customer_transactions (
-    transaction_id   INTEGER,
+CREATE TABLE IF NOT EXISTS bronze.customer_transactions (
+    transaction_id   INTEGER PRIMARY KEY,
     customer_id      INTEGER,
     transaction_date DATE,
     product_id       INTEGER,

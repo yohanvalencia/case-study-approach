@@ -9,6 +9,7 @@ _INSERT_SQL = """
         (transaction_id, customer_id, transaction_date, product_id,
          product_name, quantity, price, tax)
     VALUES (%s, %s, %s, %s, %s, %s, %s, %s)
+    ON CONFLICT (transaction_id) DO NOTHING
 """
 
 
@@ -23,7 +24,7 @@ class WriterStrategy(ABC):
         pass
 
     @abstractmethod
-    def write(self, tx: Transaction) -> None: ...
+    def write(self, tx: Transaction) -> bool: ...
 
 
 class PostgresWriter(WriterStrategy):
@@ -31,7 +32,7 @@ class PostgresWriter(WriterStrategy):
         self._conn = psycopg2.connect(dsn)
         self._cursor = self._conn.cursor()
 
-    def write(self, tx: Transaction) -> None:
+    def write(self, tx: Transaction) -> bool:
         self._cursor.execute(
             _INSERT_SQL,
             (
@@ -46,6 +47,7 @@ class PostgresWriter(WriterStrategy):
             ),
         )
         self._conn.commit()
+        return self._cursor.rowcount > 0
 
     def close(self) -> None:
         self._cursor.close()

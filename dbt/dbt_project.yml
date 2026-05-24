@@ -8,9 +8,7 @@ macro-paths: ["macros"]
 
 models:
   pipeline:
-    staging:
-      +materialized: view
-      +schema: silver
-    marts:
-      +materialized: table
-      +schema: silver
+    sales:
+      green:
+        silver:
+          +schema: silver

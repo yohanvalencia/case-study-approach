@@ -4,7 +4,6 @@ import os
 from pathlib import Path
 
 import yaml
-from pydantic import ValidationError
 
 from ingest.strategies.error_handlers import ErrorStrategy
 from ingest.strategies.writers import WriterStrategy
@@ -23,14 +22,10 @@ def ingest(csv_path: str, writer: WriterStrategy, on_error: ErrorStrategy) -> No
         for row in csv.DictReader(csv_file):
             try:
                 transaction = Transaction(**row)
-            except ValidationError as exc:
-                on_error.handle(row, exc)
-                skipped += 1
-                continue
-
-            try:
-                writer.write(transaction)
-                inserted += 1
+                if writer.write(transaction):
+                    inserted += 1
+                else:
+                    skipped += 1
             except Exception as exc:
                 on_error.handle(row, exc)
                 skipped += 1
