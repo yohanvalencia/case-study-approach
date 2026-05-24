@@ -1,0 +1,10 @@
+csv_path: data/customer_transactions.csv
+
+writer:
+  type: postgres
+  dsn: postgresql://postgres:postgres@localhost/pipeline
+
+error_handler:
+  type: log
+  # type: csv
+  # path: data/wrong_records.csv

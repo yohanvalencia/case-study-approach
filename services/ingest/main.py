@@ -1,84 +1,52 @@
 import csv
 import logging
-import os
-from datetime import date
-from decimal import Decimal
+from pathlib import Path
 
-import psycopg2
-from pydantic import BaseModel, ValidationError, field_validator
+import yaml
+from pydantic import ValidationError
+
+from error_handlers import ErrorStrategy
+from factory import build_error_handler, build_writer
+from models import Transaction
+from writers import WriterStrategy
 
 logging.basicConfig(level=logging.INFO, format="%(levelname)s %(message)s")
 log = logging.getLogger(__name__)
 
-CSV_PATH = os.getenv("CSV_PATH", "data/customer_transactions.csv")
-DATABASE_URL = os.getenv("DATABASE_URL", "postgresql://postgres:postgres@localhost/pipeline")
 
-INSERT_SQL = """
-    INSERT INTO public.customer_transactions
-        (transaction_id, customer_id, transaction_date, product_id,
-         product_name, quantity, price, tax)
-    VALUES (%s, %s, %s, %s, %s, %s, %s, %s)
-"""
+def ingest(csv_path: str, writer: WriterStrategy, on_error: ErrorStrategy) -> None:
+    inserted = 0
+    skipped = 0
 
-
-class Transaction(BaseModel):
-    transaction_id: int
-    customer_id: int
-    transaction_date: date
-    product_id: int
-    product_name: str
-    quantity: int
-    price: Decimal
-    tax: Decimal
-
-    @field_validator("customer_id", "quantity", mode="before")
-    @classmethod
-    def coerce_to_int(cls, v: str) -> int:
-        return int(float(v))
-
-
-def main() -> None:
-    conn = psycopg2.connect(DATABASE_URL)
-    cur = conn.cursor()
-    inserted = skipped = 0
-
-    with open(CSV_PATH, newline="") as f:
-        for row in csv.DictReader(f):
+    with open(csv_path, newline="") as csv_file:
+        for row in csv.DictReader(csv_file):
             try:
-                tx = Transaction(**row)
+                transaction = Transaction(**row)
             except ValidationError as exc:
-                log.warning("Validation failed, skipping row %s: %s", row, exc)
+                on_error.handle(row, exc)
                 skipped += 1
                 continue
 
             try:
-                cur.execute(
-                    INSERT_SQL,
-                    (
-                        tx.transaction_id,
-                        tx.customer_id,
-                        tx.transaction_date,
-                        tx.product_id,
-                        tx.product_name,
-                        tx.quantity,
-                        tx.price,
-                        tx.tax,
-                    ),
-                )
-                conn.commit()
+                writer.write(transaction)
                 inserted += 1
             except Exception as exc:
-                conn.rollback()
-                log.warning(
-                    "Insert failed for transaction_id=%s, skipping: %s",
-                    row.get("transaction_id"),
-                    exc,
-                )
+                on_error.handle(row, exc)
                 skipped += 1
 
-    cur.close()
-    conn.close()
-    log.info("Finished. inserted=%d skipped=%d", inserted, skipped)
+    log.info("Finished. inserted=%d  skipped=%d", inserted, skipped)
+
+
+def main() -> None:
+    config_path = Path(__file__).parent / "config.yaml"
+    with open(config_path) as f:
+        config = yaml.safe_load(f)
+
+    writer = build_writer(config["writer"])
+    on_error = build_error_handler(config["error_handler"])
+
+    with writer, on_error:
+        ingest(config["csv_path"], writer, on_error)
 
 
 if __name__ == "__main__":
