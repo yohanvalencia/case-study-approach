@@ -10,6 +10,16 @@ services:
       postgres:
         condition: service_healthy
 
+  dbt:
+    build:
+      context: ./dbt
+      no_cache: true
+    environment:
+      DBT_HOST: postgres
+    depends_on:
+      ingest:
+        condition: service_completed_successfully
+
   postgres:
     image: postgres:15
     environment:

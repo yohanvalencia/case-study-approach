@@ -5,7 +5,7 @@ import psycopg2
 from ingest.models import Transaction
 
 _INSERT_SQL = """
-    INSERT INTO public.customer_transactions
+    INSERT INTO bronze.customer_transactions
         (transaction_id, customer_id, transaction_date, product_id,
          product_name, quantity, price, tax)
     VALUES (%s, %s, %s, %s, %s, %s, %s, %s)

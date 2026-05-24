@@ -1,0 +1,12 @@
+pipeline:
+  target: dev
+  outputs:
+    dev:
+      type: postgres
+      host: "{{ env_var('DBT_HOST', 'localhost') }}"
+      port: 5432
+      user: postgres
+      password: postgres
+      dbname: pipeline
+      schema: public
+      threads: 4
