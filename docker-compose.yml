@@ -1,4 +1,15 @@
 services:
+  ingest:
+    build:
+      context: ./services
+      no_cache: true
+    volumes:
+      - ./services/config.yaml:/app/config.yaml
+      - ./data:/app/data
+    depends_on:
+      postgres:
+        condition: service_healthy
+
   postgres:
     image: postgres:15
     environment:
