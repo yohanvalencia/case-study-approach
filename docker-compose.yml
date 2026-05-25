@@ -1,24 +1,27 @@
 services:
-  ingest:
+  airflow:
     build:
-      context: ./services
+      context: ./airflow
       no_cache: true
+    command: standalone
+    user: "0:0"
+    environment:
+      AIRFLOW__CORE__EXECUTOR: LocalExecutor
+      AIRFLOW__DATABASE__SQL_ALCHEMY_CONN: postgresql+psycopg2://postgres:postgres@postgres/airflow
+      AIRFLOW__CORE__LOAD_EXAMPLES: 'false'
+      AIRFLOW__CORE__SIMPLE_AUTH_MANAGER_ALL_ADMINS: 'true'
+      PIPELINE_HOST_PATH: ${PWD}
+    ports:
+      - "8080:8080"
     volumes:
-      - ./services/config.yaml:/app/config.yaml
-      - ./data:/app/data
+      - ./dags:/opt/airflow/dags
+      - /var/run/docker.sock:/var/run/docker.sock
+      - airflow_logs:/opt/airflow/logs
     depends_on:
       postgres:
         condition: service_healthy
-
-  dbt:
-    build:
-      context: ./dbt
-      no_cache: true
-    environment:
-      DBT_HOST: postgres
-    depends_on:
-      ingest:
-        condition: service_completed_successfully
+    networks:
+      - pipeline
 
   postgres:
     image: postgres:15
@@ -33,3 +36,30 @@ services:
       test: ["CMD", "pg_isready", "-U", "postgres"]
       interval: 5s
       retries: 5
+    networks:
+      - pipeline
+
+  ingest:
+    build:
+      context: ./services
+      no_cache: true
+    image: pipeline-ingest:latest
+    profiles: [tools]
+    networks:
+      - pipeline
+
+  dbt:
+    build:
+      context: ./dbt
+      no_cache: true
+    image: pipeline-dbt:latest
+    profiles: [tools]
+    networks:
+      - pipeline
+
+networks:
+  pipeline:
+    name: pipeline
+
+volumes:
+  airflow_logs:

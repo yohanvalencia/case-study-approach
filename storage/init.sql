@@ -1,4 +1,5 @@
 CREATE DATABASE pipeline;
+CREATE DATABASE airflow;
 
 \connect pipeline
 
