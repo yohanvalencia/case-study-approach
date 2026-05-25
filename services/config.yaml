@@ -2,7 +2,7 @@ csv_path: data/customer_transactions.csv
 
 writer:
   type: postgres
-  dsn: postgresql://postgres:postgres@postgres/pipeline # for local: postgresql://postgres:postgres@localhost/pipeline
+  dsn: postgresql://postgres:postgres@postgres/pipeline
 
 error_handler:
   type: log

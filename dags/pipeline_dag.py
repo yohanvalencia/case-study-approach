@@ -20,6 +20,7 @@ with DAG(
         network_mode="pipeline",
         docker_url="unix://var/run/docker.sock",
         auto_remove="success",
+        mount_tmp_dir=False,
         mounts=[
             Mount(source=f"{HOST_PATH}/data", target="/app/data", type="bind"),
             Mount(source=f"{HOST_PATH}/services/config.yaml", target="/app/config.yaml", type="bind"),
@@ -32,6 +33,7 @@ with DAG(
         network_mode="pipeline",
         docker_url="unix://var/run/docker.sock",
         auto_remove="success",
+        mount_tmp_dir=False,
         environment={"DBT_HOST": "postgres"},
     )
 

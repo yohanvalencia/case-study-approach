@@ -10,6 +10,7 @@ _INSERT_SQL = """
          product_name, quantity, price, tax)
     VALUES (%s, %s, %s, %s, %s, %s, %s, %s)
     ON CONFLICT (transaction_id) DO NOTHING
+    RETURNING transaction_id
 """
 
 
@@ -46,8 +47,9 @@ class PostgresWriter(WriterStrategy):
                 tx.tax,
             ),
         )
+        inserted = self._cursor.fetchone() is not None
         self._conn.commit()
-        return self._cursor.rowcount > 0
+        return inserted
 
     def close(self) -> None:
         self._cursor.close()
