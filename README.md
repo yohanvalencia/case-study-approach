@@ -19,7 +19,7 @@ You can find the `CLAUDE.md` in this repo.
 
 ErrorHandler to Log:
 
-1. `docker compose up --build`
+1. `docker compose up --build && docker compose --profile tools build` 
 2. Open `localhost:8080`
 3. Run pipeline dag
 
